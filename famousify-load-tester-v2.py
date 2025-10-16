@@ -15,6 +15,9 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 from typing import List, Optional
 import time
+import io
+from PIL import Image
+import base64
 
 # ============================================
 # COSTI REALI REPLICATE (Ottobre 2025)
@@ -91,10 +94,29 @@ class LoadTester:
         self.log_callback = log_callback
         self.stopped = False
         
-        # Test image (base64 1x1 pixel)
-        self.test_image_b64 = (
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-        )
+        # Generate 1024x1024 test image
+        self.test_image_b64 = self.generate_test_image()
+    
+    def generate_test_image(self) -> str:
+        """Generate a 1024x1024 test image in base64"""
+        # Create 1024x1024 gradient image (more realistic than solid color)
+        img = Image.new('RGB', (1024, 1024), color='white')
+        
+        # Add simple gradient for variety
+        pixels = img.load()
+        for i in range(1024):
+            for j in range(1024):
+                # Simple gradient from light gray to white
+                gray_value = 200 + int(55 * (i / 1024))
+                pixels[i, j] = (gray_value, gray_value, gray_value)
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_bytes = buffer.getvalue()
+        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        
+        return img_b64
     
     def log(self, message: str, level: str = "info"):
         if self.log_callback:
@@ -290,6 +312,7 @@ class LoadTester:
         self.log(f"Total requests: {self.config.total_requests}")
         self.log(f"Concurrent: {self.config.concurrent}")
         self.log(f"Target: {self.config.base_url}")
+        self.log(f"Test image: 1024x1024 PNG")
         
         # Calculate cost
         cost_per_gen = PIPELINE_COSTS[self.config.pipeline]['base']
@@ -611,6 +634,9 @@ TEEINBLUE Pipeline ($0.08233/gen):
   • AI Generation (FLUX Kontext Max): $0.08000
   • Background Removal (lucataco/remove-bg): $0.00033
   • Upscaling (Real-ESRGAN): $0.00200
+
+🖼️ TEST IMAGE
+Genera automaticamente un'immagine 1024x1024 per ogni test.
 
 ⚙️ CONFIGURAZIONE
 
