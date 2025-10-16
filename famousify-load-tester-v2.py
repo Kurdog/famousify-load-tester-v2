@@ -94,12 +94,12 @@ class LoadTester:
         self.log_callback = log_callback
         self.stopped = False
         
-        # Generate 1024x1024 test image
-        self.test_image_b64 = self.generate_test_image()
+        # Generate 1024x1024 test image (keep as bytes)
+        self.test_image_bytes = self.generate_test_image()
     
-    def generate_test_image(self) -> str:
-        """Generate a 1024x1024 test image in base64"""
-        # Create 1024x1024 gradient image (more realistic than solid color)
+    def generate_test_image(self) -> bytes:
+        """Generate a 1024x1024 test image as PNG bytes"""
+        # Create 1024x1024 gradient image
         img = Image.new('RGB', (1024, 1024), color='white')
         
         # Add simple gradient for variety
@@ -110,13 +110,10 @@ class LoadTester:
                 gray_value = 200 + int(55 * (i / 1024))
                 pixels[i, j] = (gray_value, gray_value, gray_value)
         
-        # Convert to base64
+        # Convert to bytes
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
-        img_bytes = buffer.getvalue()
-        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
-        
-        return img_b64
+        return buffer.getvalue()
     
     def log(self, message: str, level: str = "info"):
         if self.log_callback:
@@ -130,7 +127,11 @@ class LoadTester:
         """Submit USER pipeline generation"""
         try:
             data = aiohttp.FormData()
-            data.add_field('image', self.test_image_b64)
+            # Send as file with proper content type
+            data.add_field('image', 
+                          self.test_image_bytes,
+                          filename='test.png',
+                          content_type='image/png')
             data.add_field('style', result.style)
             
             self.log(f"[{result.test_id}] Submitting USER generation (style: {result.style})...")
@@ -159,7 +160,11 @@ class LoadTester:
         """Submit TEEINBLUE pipeline generation"""
         try:
             data = aiohttp.FormData()
-            data.add_field('file', self.test_image_b64)
+            # Send as file with proper content type
+            data.add_field('file',
+                          self.test_image_bytes,
+                          filename='test.png',
+                          content_type='image/png')
             data.add_field('effect', result.style)
             
             self.log(f"[{result.test_id}] Submitting TEEINBLUE generation (style: {result.style})...")
@@ -312,7 +317,7 @@ class LoadTester:
         self.log(f"Total requests: {self.config.total_requests}")
         self.log(f"Concurrent: {self.config.concurrent}")
         self.log(f"Target: {self.config.base_url}")
-        self.log(f"Test image: 1024x1024 PNG")
+        self.log(f"Test image: 1024x1024 PNG ({len(self.test_image_bytes)} bytes)")
         
         # Calculate cost
         cost_per_gen = PIPELINE_COSTS[self.config.pipeline]['base']
@@ -636,7 +641,7 @@ TEEINBLUE Pipeline ($0.08233/gen):
   • Upscaling (Real-ESRGAN): $0.00200
 
 🖼️ TEST IMAGE
-Genera automaticamente un'immagine 1024x1024 per ogni test.
+Genera automaticamente un'immagine 1024x1024 PNG per ogni test.
 
 ⚙️ CONFIGURAZIONE
 
