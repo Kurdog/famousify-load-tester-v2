@@ -1,0 +1,21 @@
+# Famousify Load Tester V2 - Dependencies
+
+# Core async HTTP
+aiohttp==3.9.1
+aiofiles==23.2.1
+
+# HTTP requests (for simple sync calls)
+requests==2.31.0
+
+# GUI (optional, fallback to CLI if not available)
+# tkinter is usually included with Python, but listed for clarity
+
+# Data processing
+# No additional deps needed - uses stdlib json, statistics
+
+# Testing/Development (optional)
+# pytest==7.4.3
+# pytest-asyncio==0.21.1
+
+# For EXE packaging (use PyInstaller)
+# pyinstaller==6.3.0
